@@ -1,0 +1,46 @@
+@page "/logs"
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using api.Data.LogViewer
+@inject LogViewerService LogViewerSvc
+
+<PageTitle>Log Viewer</PageTitle>
+
+<h1>Log Viewer</h1>
+
+@if (logs == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Date</th>
+                <th>Application</th>
+                <th>Data</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var log in logs)
+            {
+                <tr>
+                    <td>@log.Id</td>
+                    <td>@log.Date</td>
+                    <td>@log.Application</td>
+                    <td>@log.Data</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private AuditLogModel[]? logs;
+
+    protected override async Task OnInitializedAsync()
+    {
+        logs = await LogViewerSvc.GetLogsAsync();
+    }
+}

@@ -16,26 +16,23 @@ public class LogsContext
         _auditLogsCollection = database.GetCollection<AuditLog>(mongoDBSettings.Value.CollectionName);
     }
 
-    public async Task<dynamic> GetAsync(SearchQuery query)
+    public async Task<List<AuditLog>> GetAsync(string filters, int pageNumber = 1, int pageSize = 10, bool descOrder = true)
     {
-        var filters = string.IsNullOrEmpty(query.Filters)
+        var queryFilters = string.IsNullOrEmpty(filters)
             ? new BsonDocument()
-            : MongoDB.Bson.Serialization.BsonSerializer.Deserialize<BsonDocument>(query.Filters);
+            : MongoDB.Bson.Serialization.BsonSerializer.Deserialize<BsonDocument>(filters);
 
         // Create a sort order.
-        var sortOrder = query.DescOrder
+        var sortOrder = descOrder
             ? Builders<AuditLog>.Sort.Descending(al => al.Date)
             : Builders<AuditLog>.Sort.Ascending(al => al.Date);
 
-        return
-            (await _auditLogsCollection
-                .Find(filters)
-                .Sort(sortOrder)
-                .Skip(query.PageSize * (query.PageNumber - 1))
-                .Limit(query.PageSize)
-                .ToListAsync()
-            )
-            .ToJson();
+        return await _auditLogsCollection
+            .Find(queryFilters)
+            .Sort(sortOrder)
+            .Skip(pageSize * (pageNumber - 1))
+            .Limit(pageSize)
+            .ToListAsync();
     }
 
     public async Task CreateAsync(AuditLog log)
