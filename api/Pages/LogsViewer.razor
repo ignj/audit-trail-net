@@ -1,5 +1,4 @@
-@page "/logs"
-@using Microsoft.AspNetCore.Components.QuickGrid
+@page "/"
 @using api.Data.LogViewer
 @inject LogViewerService LogViewerSvc
 
@@ -7,19 +6,94 @@
 
 <h1>Log Viewer</h1>
 
+<div class="row g-3">
+    <h2>Date filter parameters</h2>
+    <div class="form-check form-switch">
+        <input type="checkbox" class="form-check-input" id="order" @bind="DescOrder">
+        <label class="form-check-label" for="order">Desc by date</label>
+    </div>
+    <h2>Data filter parameters</h2>
+    <label>Standalone expression</label>
+    <div class="row">
+        <div class="col-md-5">
+            <input type="text" class="form-control" id="StandaloneExpressionProperty"
+            @bind="StandaloneExpression.Property">
+        </div>
+        <div class="col-md-1">
+            <select class="form-control" value="$eq" id="StandaloneExpressionOperator"
+            @onchange="SetStandaloneExpressionOperator">
+                <option value="$eq">$eq</option>
+                <option value="$gt">$gt</option>
+                <option value="$gte">$gte</option>
+                <option value="$in">$in</option>
+                <option value="$lt">$lt</option>
+                <option value="$lte">$lte</option>
+                <option value="$ne">$ne</option>
+                <option value="$nin">$nin</option>
+                <option value="$exists">$exists</option>
+                <option value="$regex">$regex</option>
+            </select>
+        </div>
+        <div class="col-md-5">
+            <input type="text" class="form-control" id="StandaloneExpressionValue" @bind="StandaloneExpression.Value">
+        </div>
+        <div class="col-md-1">
+            <button class="btn btn-success" @onclick="AddStandaloneExpression">➕</button>
+        </div>
+    </div>
+    <label>Composed expression</label>
+    <div class="row">
+        <div class="col-md-5">
+            <select class="form-control" id="ComposedExpressionFirstTerm" @bind="ComposedExpression.FirstTerm">
+                @foreach (var (term, index) in FilterExpressions.WithIndex())
+                {
+                    <option value=@(term)>@(term)</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-1">
+            <select class="form-control" value="$and" id="ComposedExpressionOperator"
+            @onchange="SetComposedExpressionOperator">
+                <option value="$and">$and</option>
+                <option value="$nor">$nor</option>
+                <option value="$or">$or</option>
+            </select>
+        </div>
+        <div class="col-md-5">
+            <select class="form-control" id="ComposedExpressionSecondTerm" @bind="ComposedExpression.SecondTerm">
+                @foreach (var (term, index) in FilterExpressions.WithIndex())
+                {
+                    <option value=@(term)>@(term)</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-1">
+            <button class="btn btn-success btn-sm" @onclick="AddComposedExpression">➕</button>
+            <button class="btn btn-success btn-sm" @onclick="GenerateFilter">⚙️</button>
+        </div>
+    </div>
+    <div class="mb-3">
+        <label for="QueryPreview" class="form-label">Data query</label>
+        <textarea class="form-control" id="QueryPreview" rows="3" @bind="QueryPreview"></textarea>
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-primary" @onclick="HandleSearch">Search</button>
+    </div>
+</div>
+
 @if (logs == null)
 {
     <p><em>Loading...</em></p>
 }
 else
 {
-    <table class="table">
+    <table class="table table-hover">
         <thead>
             <tr>
-                <th>Id</th>
-                <th>Date</th>
-                <th>Application</th>
-                <th>Data</th>
+                <th scope="col">Id</th>
+                <th scope="col">Date</th>
+                <th scope="col">Application</th>
+                <th scope="col">Data</th>
             </tr>
         </thead>
         <tbody>
@@ -38,9 +112,59 @@ else
 
 @code {
     private AuditLogModel[]? logs;
+    private bool DescOrder = false;
+    private StandaloneExpression StandaloneExpression = new();
+    private ComposedExpression ComposedExpression = new();
+    private List<string> FilterExpressions = new();
+    private string QueryPreview = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
-        logs = await LogViewerSvc.GetLogsAsync();
+        StandaloneExpression.Operator = "$eq";
+
+        logs = await LogViewerSvc.GetLogsAsync(null, null, null, null);
+    }
+
+    private async Task HandleSearch()
+    {
+        logs = await LogViewerSvc.GetLogsAsync(QueryPreview, null, null, DescOrder);
+    }
+
+    private void AddStandaloneExpression()
+    {
+        FilterExpressions.Add(StandaloneExpression.AsQuery());
+
+        if (FilterExpressions.Count == 1)
+        {
+            QueryPreview = $"{FilterExpressions[0]}";
+            InitializeComposedOptions();
+        }
+    }
+
+    private void AddComposedExpression()
+    {
+        FilterExpressions.Add(ComposedExpression.AsQuery());
+    }
+
+    private void InitializeComposedOptions()
+    {
+        ComposedExpression.FirstTerm = StandaloneExpression.AsQuery();
+        ComposedExpression.Operator = "$and";
+        ComposedExpression.SecondTerm = StandaloneExpression.AsQuery();
+    }
+
+    private void SetStandaloneExpressionOperator(ChangeEventArgs e)
+    {
+        StandaloneExpression.Operator = e.Value?.ToString();
+    }
+
+    private void SetComposedExpressionOperator(ChangeEventArgs e)
+    {
+        ComposedExpression.Operator = e.Value?.ToString();
+    }
+
+    private void GenerateFilter()
+    {
+        QueryPreview = $"{ComposedExpression.AsQuery()}";
     }
 }

@@ -11,7 +11,6 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.Configure<MongoDbSettings>(builder.Configuration.GetSection("MongoDB"));
 builder.Services.AddSingleton<LogsContext>();
-builder.Services.AddSingleton<WeatherForecastService>();
 builder.Services.AddSingleton<LogViewerService>();
 
 var app = builder.Build();
