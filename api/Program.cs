@@ -21,11 +21,13 @@ app.UseRouting();
 
 app.MapPost("/log", [Topic("pubsub", "log")] async (AuditLogInputDto log, LogsContext ctx) =>
 {
+    var document = BsonDocument.Parse(log.Data);
+    document.Add("date", log.Date);
+    document.Add("application", log.Application);
+
     await ctx.CreateAsync(new AuditLog
     {
-        Date = log.Date,
-        Application = log.Application,
-        Data = BsonDocument.Parse(log.Data)
+        Data = document
     });
 });
 // app.MapPost("/logs", async (SearchQuery searchQuery, LogsContext ctx) =>

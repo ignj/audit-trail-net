@@ -16,20 +16,20 @@ public class LogsContext
         _auditLogsCollection = database.GetCollection<AuditLog>(mongoDBSettings.Value.CollectionName);
     }
 
-    public async Task<List<AuditLog>> GetAsync(string filters, int pageNumber = 1, int pageSize = 10, bool descOrder = true)
+    public async Task<List<AuditLog>> GetAsync(string filters, string ordering, int pageNumber = 1, int pageSize = 10)
     {
         var queryFilters = string.IsNullOrEmpty(filters)
             ? new BsonDocument()
             : MongoDB.Bson.Serialization.BsonSerializer.Deserialize<BsonDocument>(filters);
 
         // Create a sort order.
-        var sortOrder = descOrder
-            ? Builders<AuditLog>.Sort.Descending(al => al.Date)
-            : Builders<AuditLog>.Sort.Ascending(al => al.Date);
+        var queryOrder = string.IsNullOrEmpty(ordering)
+            ? new BsonDocument()
+            : MongoDB.Bson.Serialization.BsonSerializer.Deserialize<BsonDocument>(ordering);
 
         return await _auditLogsCollection
             .Find(queryFilters)
-            .Sort(sortOrder)
+            .Sort(queryOrder)
             .Skip(pageSize * (pageNumber - 1))
             .Limit(pageSize)
             .ToListAsync();
