@@ -139,12 +139,28 @@
 }
 else
 {
+    <h2>Data</h2>
+    <nav>
+        <ul class="pagination justify-content-start">
+            <li class="page-item">
+                <a class="page-link" @onclick="FetchPreviousPage">Previous</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" @onclick="FetchNextPage">Next</a>
+            </li>
+        </ul>
+    </nav>
+    <select class="form-control" @onchange="SetPageSize" style="width: auto;">
+        <option value="5">5</option>
+        <option value="10">10</option>
+        <option value="25">25</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+    </select>
     <table class="table table-hover">
         <thead>
             <tr>
                 <th scope="col">Id</th>
-                @* <th scope="col">Date</th>
-            <th scope="col">Application</th> *@
                 <th scope="col">Data</th>
             </tr>
         </thead>
@@ -153,8 +169,6 @@ else
             {
                 <tr>
                     <td>@log.Id</td>
-                    @* <td>@log.Date</td>
-            <td>@log.Application</td> *@
                     <td>@log.Data</td>
                 </tr>
             }
@@ -175,17 +189,20 @@ else
     private List<string> FilterExpressions = new();
     private string FilterQueryPreview = string.Empty;
 
+    private int CurrentPage = 1;
+    private int PageSize = 5;
+
     protected override async Task OnInitializedAsync()
     {
         StandaloneFilterExpression.Operator = "$eq";
         StandaloneSortExpression.Order = "-1";
 
-        logs = await LogViewerSvc.GetLogsAsync(null, null, null, null);
+        logs = await LogViewerSvc.GetLogsAsync(default, default, CurrentPage, PageSize);
     }
 
     private async Task HandleSearch()
     {
-        logs = await LogViewerSvc.GetLogsAsync(FilterQueryPreview, SortQueryPreview, null, null);
+        logs = await LogViewerSvc.GetLogsAsync(FilterQueryPreview, SortQueryPreview, CurrentPage, PageSize);
     }
 
     private void AddStandaloneFilterExpression(StandaloneFilterExpression exp)
@@ -266,5 +283,26 @@ else
     private void GenerateSortQuery(StandaloneSortExpression exp)
     {
         SortQueryPreview = exp.AsQuery();
+    }
+
+    private async Task FetchPreviousPage()
+    {
+        if (CurrentPage > 1)
+        {
+            CurrentPage -= 1;
+            await HandleSearch();
+        }
+    }
+
+    private async Task FetchNextPage()
+    {
+        CurrentPage += 1;
+        await HandleSearch();
+    }
+
+    private async Task SetPageSize(ChangeEventArgs e)
+    {
+        PageSize = int.Parse(e.Value?.ToString());
+        await HandleSearch();
     }
 }

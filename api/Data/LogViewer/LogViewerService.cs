@@ -11,9 +11,9 @@ public class LogViewerService
         _ctx = ctx;
     }
 
-    public async Task<AuditLogModel[]> GetLogsAsync(string? filters, string? ordering, int? pageNumber, int? pageSize)
+    public async Task<AuditLogModel[]> GetLogsAsync(string filters, string ordering, int pageNumber, int pageSize)
     {
-        return (await _ctx.GetAsync(filters ?? string.Empty, ordering ?? string.Empty, pageNumber.GetValueOrDefault(), pageSize.GetValueOrDefault()))
+        return (await _ctx.GetAsync(filters, ordering, pageNumber, pageSize))
             .Select(l => new AuditLogModel
             {
                 Id = l.Id.ToString(),
