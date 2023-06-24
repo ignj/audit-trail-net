@@ -1,4 +1,3 @@
-using api.Data;
 using api.Data.LogViewer;
 using Context;
 using Dapr;
@@ -6,6 +5,9 @@ using Models;
 using MongoDB.Bson;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Configuration.AddYamlFile("appsettings.Development.yaml", true);
+builder.Configuration.AddYamlFile("appsettings.yaml");
 
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
