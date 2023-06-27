@@ -8,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddYamlFile("appsettings.Development.yaml", true);
 builder.Configuration.AddYamlFile("appsettings.yaml");
+builder.Configuration.AddEnvironmentVariables();
 
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
@@ -32,10 +33,6 @@ app.MapPost("/log", [Topic("pubsub", "log")] async (AuditLogInputDto log, LogsCo
         Data = document
     });
 });
-// app.MapPost("/logs", async (SearchQuery searchQuery, LogsContext ctx) =>
-// {
-//     return Results.Content(await ctx.GetAsync(searchQuery), "application/json");
-// });
 
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");

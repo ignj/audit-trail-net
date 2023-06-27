@@ -12,3 +12,10 @@ services:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
       MONGO_INITDB_DATABASE: audit_trail
+  api:
+    build: ./api
+    restart: always
+    ports:
+      - 8080:8080
+    environment:
+      MongoDB__ConnectionURI: mongodb://admin:admin@db:27017
